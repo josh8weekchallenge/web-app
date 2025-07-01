@@ -678,6 +678,10 @@ runWhenMemberstackReady(async function (memberstack) {
     }
     
     updateExtraWorkoutButtons();
+
+    // ✅ ADD THIS LINE - Re-initialize carousel with correct slide count
+    initializeCarousel(currentWorkouts.length);
+
   }
 
   async function loadExtraWorkout(muscleGroup) {
