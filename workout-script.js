@@ -477,6 +477,94 @@ runWhenMemberstackReady(async function (memberstack) {
 
     updateExerciseCompletionUI(exerciseItem, isComplete);
   }
+
+  // 1. Add this function to remove extra workout from persistence
+  async function removeExtraWorkoutFromPersistence(week, muscleGroup) {
+    try {
+      const currentData = memberJSON?.data?.extraWorkouts || {};
+      const weekData = currentData[week] || [];
+      
+      // Remove the muscle group from the week's array
+      const updatedWeekData = weekData.filter(group => group !== muscleGroup);
+      
+      const payload = {
+        extraWorkouts: {
+          ...currentData,
+          [week]: updatedWeekData
+        }
+      };
+  
+      await fetchAndMergeMemberData(payload);
+      const updatedJSON = await memberstack.getMemberJSON();
+      memberJSON.data = updatedJSON.data;
+      savedExtraWorkouts = updatedJSON.data.extraWorkouts || {};
+      
+      console.log(`✅ Removed extra workout: ${muscleGroup} from ${week}`);
+    } catch (error) {
+      console.error("❌ Failed to remove extra workout:", error);
+    }
+  }
+  
+  // 2. Add this function to remove extra workout from UI and data
+  async function removeExtraWorkout(workoutSlug) {
+    // Find the workout in currentWorkouts array
+    const workoutIndex = currentWorkouts.findIndex(w => w.slug === workoutSlug);
+    if (workoutIndex === -1) return;
+  
+    const workout = currentWorkouts[workoutIndex];
+    
+    // Extract muscle group from slug (assuming format like "extra-workout-chest")
+    const muscleGroup = workout.slug.replace('extra-workout-', '').replace(/[-_]/g, ' ');
+    
+    // Remove from persistence
+    await removeExtraWorkoutFromPersistence(currentWeek, muscleGroup);
+    
+    // Remove from currentWorkouts array
+    currentWorkouts.splice(workoutIndex, 1);
+    
+    // Hide the workout card
+    const cardCache = DOM.getCard(workoutIndex + 1);
+    if (cardCache) {
+      cardCache.element.style.display = "none";
+    }
+    
+    // Update button states
+    updateExtraWorkoutButtons();
+    
+    // Reinitialize carousel with new count
+    setTimeout(() => {
+      initializeCarousel(currentWorkouts.length);
+    }, 100);
+    
+    // Show success message
+    triggerToast("remove-success");
+  }
+  
+  // 3. Add event listener for remove buttons (add this in your main function)
+  document.addEventListener("click", async function (e) {
+    const removeBtn = e.target.closest('[data-remove-extra-workout]');
+    if (!removeBtn) return;
+    
+    e.preventDefault();
+    
+    const workoutSlug = removeBtn.getAttribute("data-remove-extra-workout");
+    if (!workoutSlug) return;
+    
+    // Optional: Add confirmation dialog
+    const confirmRemove = confirm("Are you sure you want to remove this extra workout?");
+    if (!confirmRemove) return;
+    
+    toggleButtonLoader(removeBtn, true);
+    
+    try {
+      await removeExtraWorkout(workoutSlug);
+    } catch (error) {
+      console.error("❌ Failed to remove extra workout:", error);
+      triggerToast("remove-error");
+    }
+    
+    toggleButtonLoader(removeBtn, false);
+  });
   
   async function loadWorkoutsByWeek({ week = currentWeek, type, type_category } = {}) {
   	showSkeletons();
@@ -581,13 +669,14 @@ runWhenMemberstackReady(async function (memberstack) {
     });
   }
 
+  // 5. Update the updateExtraWorkoutButtons function to handle removed workouts
   function updateExtraWorkoutButtons() {
     document.querySelectorAll('[data-load-extra-workout]').forEach(btn => {
       const muscleGroup = btn.getAttribute("data-load-extra-workout");
       if (!muscleGroup) return;
-
+  
       const isAlreadyLoaded = isExtraWorkoutAlreadyLoaded(muscleGroup);
-
+  
       if (isAlreadyLoaded) {
         btn.classList.add("is-disabled");
         btn.setAttribute("aria-disabled", "true");
@@ -596,7 +685,7 @@ runWhenMemberstackReady(async function (memberstack) {
       } else {
         btn.classList.remove("is-disabled");
         btn.setAttribute("aria-disabled", "false");
-        btn.textContent = "Next";
+        btn.textContent = "Add Workout"; // Changed from "Next"
         btn.style.pointerEvents = "auto";
       }
     });
