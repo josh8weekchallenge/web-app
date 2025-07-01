@@ -30,6 +30,7 @@ runWhenMemberstackReady(async function (memberstack) {
   console.log("📦 Memberstack fields:", gender, frequency, level, split, category);
 	let currentWorkoutType = "Gym";
 	let currentHomeCategory = null;
+	let savedExtraWorkouts = {};
 
   const DOM = {
     exerciseForm: null, progressBar: null, progressLabel: null, progressHeading: null,
@@ -571,7 +572,8 @@ runWhenMemberstackReady(async function (memberstack) {
       container.classList.remove("is-fading-in");
       hideSkeletons();
       toggleHomeWorkoutElements(isHomeWorkout);
-      const slideCount = isHomeWorkout ? 3 : (parseInt(frequency) || 3);
+      //const slideCount = isHomeWorkout ? 3 : (parseInt(frequency) || 3);
+      const slideCount = isHomeWorkout ? 3 : currentWorkouts.length;
       initializeCarousel(slideCount);
     });
   }
