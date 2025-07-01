@@ -679,6 +679,11 @@ runWhenMemberstackReady(async function (memberstack) {
     }
     
     updateExtraWorkoutButtons();
+
+    // Add a delay before reinitializing carousel
+    setTimeout(() => {
+      initializeCarousel(currentWorkouts.length);
+    }, 200);
   }
 
   async function loadExtraWorkout(muscleGroup) {
