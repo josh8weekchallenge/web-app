@@ -3,6 +3,22 @@ runWhenMemberstackReady(async function (memberstack) {
 
   const member = await memberstack.getCurrentMember();
   const memberJSON = await memberstack.getMemberJSON();
+
+  // ADD THE INITIALIZATION FUNCTION HERE:
+  async function initializeSavedExtraWorkouts() {
+    try {
+      const memberData = await memberstack.getMemberJSON();
+      savedExtraWorkouts = memberData?.data?.extraWorkouts || {};
+      console.log("📋 Loaded saved extra workouts:", savedExtraWorkouts);
+    } catch (error) {
+      console.error("❌ Failed to load saved extra workouts:", error);
+      savedExtraWorkouts = {};
+    }
+  }
+
+  // AND CALL IT HERE:
+  await initializeSavedExtraWorkouts();
+  
   const fields = member?.data?.customFields || {};
   let currentWeek = "Week 1";
   let currentWorkouts = [];
@@ -545,6 +561,12 @@ runWhenMemberstackReady(async function (memberstack) {
     
     await new Promise(resolve => setTimeout(resolve, 40));
 
+    // 5. ADD THESE LINES in loadWorkoutsByWeek function, right before the final requestAnimationFrame(() => {
+    // Load saved extra workouts for this week (only for gym workouts)
+    if (!isHomeWorkout) {
+      await loadSavedExtraWorkouts(week);
+    }
+
     requestAnimationFrame(() => {
       container.classList.remove("is-fading-in");
       hideSkeletons();
@@ -581,6 +603,83 @@ runWhenMemberstackReady(async function (memberstack) {
     });
   }
 
+  // 2. ADD THIS FUNCTION after the updateExtraWorkoutButtons() function
+  async function saveExtraWorkoutToPersistence(week, muscleGroup) {
+    try {
+      const currentData = memberJSON?.data?.extraWorkouts || {};
+      const weekData = currentData[week] || [];
+      
+      if (!weekData.includes(muscleGroup)) {
+        weekData.push(muscleGroup);
+      }
+  
+      const payload = {
+        extraWorkouts: {
+          ...currentData,
+          [week]: weekData
+        }
+      };
+  
+      await fetchAndMergeMemberData(payload);
+      const updatedJSON = await memberstack.getMemberJSON();
+      memberJSON.data = updatedJSON.data;
+      savedExtraWorkouts = updatedJSON.data.extraWorkouts || {};
+      
+      console.log(`✅ Saved extra workout: ${muscleGroup} to ${week}`);
+    } catch (error) {
+      console.error("❌ Failed to save extra workout:", error);
+    }
+  }
+  
+  // 3. ADD THIS FUNCTION after the saveExtraWorkoutToPersistence function
+  async function loadSavedExtraWorkouts(week) {
+    const extraWorkoutsForWeek = savedExtraWorkouts[week] || [];
+    
+    for (const muscleGroup of extraWorkoutsForWeek) {
+      if (!isExtraWorkoutAlreadyLoaded(muscleGroup)) {
+        console.log(`🔄 Loading saved extra workout: ${muscleGroup} for ${week}`);
+        
+        try {
+          const response = await fetch("https://xwmy-1hew-v3j0.e2.xano.io/api:SN0V_YjN/getUserWorkouts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              gender, training_frequency: frequency, training_level: level, training_split: split,
+              category: "Extra", week: week, extra_workout: true, extra_workout_category: muscleGroup
+            })
+          });
+  
+          const data = await response.json();
+          const workout = data?.workouts?.[0];
+  
+          if (workout) {
+            const nextIdx = currentWorkouts.length + 1;
+            const cardCache = setupWorkoutCard(workout, nextIdx, true);
+            if (cardCache) {
+              currentWorkouts.push(workout);
+  
+              const sortedExercises = [...(workout.exercises || [])].sort((a, b) => a.exercise_order - b.exercise_order);
+              cardCache.exerciseList?.setAttribute("data-workout-slug", workout.slug);
+  
+              sortedExercises.forEach((exercise, i) => {
+                setupExercise(exercise, i + 1, cardCache, { ...workout, exercises: sortedExercises });
+              });
+  
+              for (let i = sortedExercises.length + 1; i <= 10; i++) {
+                const exCache = cardCache.exercises.get(i);
+                if (exCache?.element) exCache.element.style.display = "none";
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Failed to load saved extra workout ${muscleGroup}:`, error);
+        }
+      }
+    }
+    
+    updateExtraWorkoutButtons();
+  }
+
   async function loadExtraWorkout(muscleGroup) {
     if (isExtraWorkoutAlreadyLoaded(muscleGroup)) return;
 
@@ -604,6 +703,9 @@ runWhenMemberstackReady(async function (memberstack) {
     if (!cardCache) return;
 
     currentWorkouts.push(workout);
+
+    // 4. ADD THIS LINE in your loadExtraWorkout function
+    await saveExtraWorkoutToPersistence(currentWeek, muscleGroup);
 
     const sortedExercises = [...(workout.exercises || [])].sort((a, b) => a.exercise_order - b.exercise_order);
 
