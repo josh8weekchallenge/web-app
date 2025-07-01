@@ -4,7 +4,6 @@ runWhenMemberstackReady(async function (memberstack) {
   const member = await memberstack.getCurrentMember();
   const memberJSON = await memberstack.getMemberJSON();
 
-  // ADD THE INITIALIZATION FUNCTION HERE:
   async function initializeSavedExtraWorkouts() {
     try {
       const memberData = await memberstack.getMemberJSON();
@@ -16,7 +15,6 @@ runWhenMemberstackReady(async function (memberstack) {
     }
   }
 
-  // AND CALL IT HERE:
   await initializeSavedExtraWorkouts();
   
   const fields = member?.data?.customFields || {};
@@ -604,7 +602,6 @@ runWhenMemberstackReady(async function (memberstack) {
     });
   }
 
-  // 2. ADD THIS FUNCTION after the updateExtraWorkoutButtons() function
   async function saveExtraWorkoutToPersistence(week, muscleGroup) {
     try {
       const currentData = memberJSON?.data?.extraWorkouts || {};
@@ -632,7 +629,6 @@ runWhenMemberstackReady(async function (memberstack) {
     }
   }
   
-  // 3. ADD THIS FUNCTION after the saveExtraWorkoutToPersistence function
   async function loadSavedExtraWorkouts(week) {
     const extraWorkoutsForWeek = savedExtraWorkouts[week] || [];
     
@@ -683,7 +679,7 @@ runWhenMemberstackReady(async function (memberstack) {
     // Add a delay before reinitializing carousel
     setTimeout(() => {
       initializeCarousel(currentWorkouts.length);
-    }, 200);
+    }, 100);
   }
 
   async function loadExtraWorkout(muscleGroup) {
