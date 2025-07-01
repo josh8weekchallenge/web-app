@@ -71,7 +71,8 @@ runWhenMemberstackReady(async function (memberstack) {
           overlay: card.querySelector('[data-workout-progress="image-overlay"]'),
           showCompleteEls: card.querySelectorAll('[data-workout-progress="show-complete"]'),
           hideCompleteEls: card.querySelectorAll('[data-workout-progress="hide-complete"]'),
-          exerciseList: document.querySelector(`[data-workout="exercise-list-workout-${idx}"]`)
+          exerciseList: document.querySelector(`[data-workout="exercise-list-workout-${idx}"]`),
+		      removeBtn: card.querySelector('[data-remove-extra-workout]')
         };
         
         if (cardCache.exerciseList) {
@@ -331,6 +332,17 @@ runWhenMemberstackReady(async function (memberstack) {
     });
 
     cardCache.element.setAttribute("data-workout-slug", workout.slug);
+
+    // ADD THIS SECTION FOR REMOVE BUTTON:
+    if (cardCache.removeBtn) {
+      if (isExtraWorkout) {
+        cardCache.removeBtn.setAttribute("data-remove-extra-workout", workout.slug);
+        cardCache.removeBtn.style.display = "block";
+      } else {
+        cardCache.removeBtn.style.display = "none";
+        cardCache.removeBtn.removeAttribute("data-remove-extra-workout");
+      }
+    }
 
     const hideTags = currentWorkoutType === "Home" || category === "Subscription" || isExtraWorkout;
 
