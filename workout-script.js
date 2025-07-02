@@ -1458,34 +1458,54 @@ runWhenMemberstackReady(async function (memberstack) {
     });
   }
   
+  // Replace your triggerToast function with this debugging version:
   function triggerToast(triggerId) {
+    console.log(`🍞 triggerToast called with ID: "${triggerId}"`);
+    
     const toastBox = document.querySelector(`[ms-code-toast-box="${triggerId}"]`);
-    if (!toastBox) return;
-
+    console.log(`🔍 Looking for element with selector: [ms-code-toast-box="${triggerId}"]`);
+    console.log(`📦 Found toast element:`, toastBox);
+    
+    if (!toastBox) {
+      console.error(`❌ No toast element found for ID: "${triggerId}"`);
+      console.log(`📋 Available toast elements:`);
+      document.querySelectorAll('[ms-code-toast-box]').forEach(el => {
+        const id = el.getAttribute('ms-code-toast-box');
+        console.log(`  - Found toast with ID: "${id}"`);
+      });
+      return;
+    }
+  
+    console.log(`✅ Toast element found, triggering animation...`);
+  
     const slideInDuration = 300;
     const staticDuration = 2000;
     const fadeOutDuration = 300;
     let startY = 0;
     let currentY = 0;
     let isDragging = false;
-
+  
     toastBox.style.display = "flex";
     toastBox.style.opacity = "0";
     toastBox.style.transform = "translateY(-100%)";
     toastBox.style.transition = "none";
-
+    
+    console.log(`🎬 Toast initial styles set`);
+  
     setTimeout(() => {
+      console.log(`🎬 Starting toast slide-in animation`);
       toastBox.style.transition = "transform 0.3s ease, opacity 0.3s ease";
       toastBox.style.transform = "translateY(0)";
       toastBox.style.opacity = "1";
     }, 10);
-
+  
     const onTouchStart = (e) => {
       isDragging = true;
       startY = e.touches ? e.touches[0].clientY : e.clientY;
       toastBox.style.transition = "none";
+      console.log(`👆 Touch/drag started`);
     };
-
+  
     const onTouchMove = (e) => {
       if (!isDragging) return;
       currentY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -1495,23 +1515,29 @@ runWhenMemberstackReady(async function (memberstack) {
         toastBox.style.transform = `translateY(${translateY}px)`;
       }
     };
-
+  
     const onTouchEnd = () => {
+      if (!isDragging) return;
       isDragging = false;
       const distance = startY - currentY;
+      console.log(`👆 Touch/drag ended, distance: ${distance}px`);
+      
       if (distance > 30) {
+        console.log(`🎬 Dismissing toast via swipe`);
         toastBox.style.transition = "transform 0.3s ease, opacity 0.3s ease";
         toastBox.style.transform = "translateY(-150%)";
         toastBox.style.opacity = "0";
         setTimeout(() => {
           toastBox.style.display = "none";
+          console.log(`🎬 Toast hidden after swipe dismiss`);
         }, fadeOutDuration);
       } else {
+        console.log(`🎬 Returning toast to position`);
         toastBox.style.transition = "transform 0.3s ease";
         toastBox.style.transform = "translateY(0)";
       }
     };
-
+  
     toastBox.addEventListener("mousedown", onTouchStart);
     toastBox.addEventListener("mousemove", onTouchMove);
     toastBox.addEventListener("mouseup", onTouchEnd);
@@ -1519,17 +1545,21 @@ runWhenMemberstackReady(async function (memberstack) {
     toastBox.addEventListener("touchstart", onTouchStart, { passive: false });
     toastBox.addEventListener("touchmove", onTouchMove, { passive: false });
     toastBox.addEventListener("touchend", onTouchEnd);
-
+  
     setTimeout(() => {
       if (!isDragging) {
+        console.log(`⏰ Auto-dismissing toast after ${slideInDuration + staticDuration}ms`);
         toastBox.style.transition = "transform 0.3s ease, opacity 0.3s ease";
         toastBox.style.transform = "translateY(-100%)";
         toastBox.style.opacity = "0";
         setTimeout(() => {
           toastBox.style.display = "none";
+          console.log(`🎬 Toast hidden after auto-dismiss`);
         }, fadeOutDuration);
       }
     }, slideInDuration + staticDuration);
+    
+    console.log(`🍞 Toast setup complete for ID: "${triggerId}"`);
   }
   
   document.querySelectorAll('[data-load-home]').forEach(btn => {
