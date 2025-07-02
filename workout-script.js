@@ -652,38 +652,36 @@ runWhenMemberstackReady(async function (memberstack) {
     }
   }
   
-  // 2. Add this function to remove extra workout from UI and data
+  // Replace your removeExtraWorkout function with this:
   async function removeExtraWorkout(workoutSlug) {
-    // Find the workout in currentWorkouts array
     const workoutIndex = currentWorkouts.findIndex(w => w.slug === workoutSlug);
     if (workoutIndex === -1) return;
   
     const workout = currentWorkouts[workoutIndex];
     
-    // Extract muscle group from slug (assuming format like "extra-workout-chest")
-    const muscleGroup = workout.slug.replace('extra-workout-', '').replace(/[-_]/g, ' ');
+    // Find the matching button to get the exact muscle group name that was saved
+    let muscleGroup = null;
+    document.querySelectorAll('[data-load-extra-workout]').forEach(btn => {
+      const btnGroup = btn.getAttribute("data-load-extra-workout");
+      if (workoutSlug.toLowerCase().includes(btnGroup.toLowerCase())) {
+        muscleGroup = btnGroup;
+      }
+    });
     
-    // Remove from persistence
-    await removeExtraWorkoutFromPersistence(currentWeek, muscleGroup);
-    
-    // Remove from currentWorkouts array
-    currentWorkouts.splice(workoutIndex, 1);
-    
-    // Hide the workout card
-    const cardCache = DOM.getCard(workoutIndex + 1);
-    if (cardCache) {
-      cardCache.element.style.display = "none";
+    // If no button match, extract from slug and capitalize properly
+    if (!muscleGroup) {
+      muscleGroup = workoutSlug.replace('extra-workout-', '').split('-')[0];
+      muscleGroup = muscleGroup.charAt(0).toUpperCase() + muscleGroup.slice(1).toLowerCase();
     }
     
-    // Update button states
+    await removeExtraWorkoutFromPersistence(currentWeek, muscleGroup);
+    currentWorkouts.splice(workoutIndex, 1);
+    
+    const cardCache = DOM.getCard(workoutIndex + 1);
+    if (cardCache) cardCache.element.style.display = "none";
+    
     updateExtraWorkoutButtons();
-    
-    // Reinitialize carousel with new count
-    setTimeout(() => {
-      initializeCarousel(currentWorkouts.length);
-    }, 100);
-    
-    // Show success message
+    setTimeout(() => initializeCarousel(currentWorkouts.length), 100);
     triggerToast("remove-success");
   }
   
