@@ -630,33 +630,8 @@ runWhenMemberstackReady(async function (memberstack) {
 
   
   
-  // 3. Add event listener for remove buttons (add this in your main function)
-  document.addEventListener("click", async function (e) {
-    const removeBtn = e.target.closest('[data-remove-extra-workout]');
-    if (!removeBtn) return;
-    
-    e.preventDefault();
-    
-    const workoutSlug = removeBtn.getAttribute("data-remove-extra-workout");
-    if (!workoutSlug) return;
-    
-    // Optional: Add confirmation dialog
-    const confirmRemove = confirm("Are you sure you want to remove this extra workout?");
-    if (!confirmRemove) return;
-    
-    toggleButtonLoader(removeBtn, true);
-    
-    try {
-      await removeExtraWorkout(workoutSlug);
-    } catch (error) {
-      console.error("❌ Failed to remove extra workout:", error);
-      triggerToast("remove-workout-error");
-    }
-    
-    toggleButtonLoader(removeBtn, false);
-  });
-
-	document.addEventListener("click", function (e) {
+  // 1. Update your trigger button event listener to use the correct selector:
+  document.addEventListener("click", function (e) {
     const triggerRemoveBtn = e.target.closest('[data-trigger-remove-workout]');
     if (!triggerRemoveBtn) return;
     
@@ -667,8 +642,8 @@ runWhenMemberstackReady(async function (memberstack) {
     
     console.log(`🎯 Triggered removal for: ${workoutSlug}`);
     
-    // Find the universal remove button and pass the slug to it
-    const universalRemoveBtn = document.querySelector('[data-remove-extra-workout]');
+    // FIXED: Look for the universal button with the correct attribute
+    const universalRemoveBtn = document.querySelector('[data-universal-remove-workout]');
     if (!universalRemoveBtn) {
       console.error('❌ Universal remove button not found');
       return;
@@ -684,11 +659,55 @@ runWhenMemberstackReady(async function (memberstack) {
       if (buttonText) {
         buttonText.textContent = `Remove ${workout.name}`;
       }
-      // You could also trigger a modal, highlight the button, etc.
     }
     
     console.log(`✅ Universal button configured for: ${workoutSlug}`);
   });
+  
+  // 2. Update your universal remove button event listener:
+  document.addEventListener("click", async function (e) {
+    // FIXED: Only listen for the universal button, not card buttons
+    const removeBtn = e.target.closest('[data-universal-remove-workout]');
+    if (!removeBtn) return;
+    
+    e.preventDefault();
+    
+    const workoutSlug = removeBtn.getAttribute("data-remove-extra-workout");
+    if (!workoutSlug) {
+      console.error('❌ No workout selected for removal');
+      return;
+    }
+    
+    // Optional: Add confirmation dialog
+    const workout = currentWorkouts.find(w => w.slug === workoutSlug);
+    const workoutName = workout ? workout.name : 'this workout';
+    const confirmRemove = confirm(`Are you sure you want to remove ${workoutName}?`);
+    if (!confirmRemove) return;
+    
+    toggleButtonLoader(removeBtn, true);
+    
+    try {
+      await removeExtraWorkout(workoutSlug);
+      
+      // Reset the universal button after successful removal
+      removeBtn.removeAttribute("data-remove-extra-workout");
+      const buttonText = removeBtn.querySelector('[button-text]');
+      if (buttonText) {
+        buttonText.textContent = "Remove Workout"; // Default text
+      }
+      
+    } catch (error) {
+      console.error("❌ Failed to remove extra workout:", error);
+      triggerToast("remove-workout-error");
+    }
+    
+    toggleButtonLoader(removeBtn, false);
+  });
+
+
+
+
+  
   
   async function loadWorkoutsByWeek({ week = currentWeek, type, type_category } = {}) {
   	showSkeletons();
