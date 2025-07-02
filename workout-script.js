@@ -650,7 +650,7 @@ runWhenMemberstackReady(async function (memberstack) {
     }
     
     // Transfer the workout slug to the universal button
-    universalRemoveBtn.setAttribute("data-remove-extra-workout", workoutSlug);
+    universalRemoveBtn.setAttribute("data-universal-remove-workout", workoutSlug);
     
     // Optional: Update the universal button text to show which workout will be removed
     const workout = currentWorkouts.find(w => w.slug === workoutSlug);
@@ -672,7 +672,7 @@ runWhenMemberstackReady(async function (memberstack) {
     
     e.preventDefault();
     
-    const workoutSlug = removeBtn.getAttribute("data-remove-extra-workout");
+    const workoutSlug = removeBtn.getAttribute("data-universal-remove-workout");
     if (!workoutSlug) {
       console.error('❌ No workout selected for removal');
       return;
@@ -690,7 +690,7 @@ runWhenMemberstackReady(async function (memberstack) {
       await removeExtraWorkout(workoutSlug);
       
       // Reset the universal button after successful removal
-      removeBtn.removeAttribute("data-remove-extra-workout");
+      removeBtn.removeAttribute("data-universal-remove-workout");
       const buttonText = removeBtn.querySelector('[button-text]');
       if (buttonText) {
         buttonText.textContent = "Remove Workout"; // Default text
