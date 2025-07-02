@@ -72,7 +72,7 @@ runWhenMemberstackReady(async function (memberstack) {
           showCompleteEls: card.querySelectorAll('[data-workout-progress="show-complete"]'),
           hideCompleteEls: card.querySelectorAll('[data-workout-progress="hide-complete"]'),
           exerciseList: document.querySelector(`[data-workout="exercise-list-workout-${idx}"]`),
-		      removeBtn: card.querySelector('[data-remove-extra-workout]')
+		      removeBtn: card.querySelector('[data-trigger-remove-workout]')
         };
         
         if (cardCache.exerciseList) {
