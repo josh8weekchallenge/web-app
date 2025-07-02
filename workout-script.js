@@ -336,11 +336,11 @@ runWhenMemberstackReady(async function (memberstack) {
     // ADD THIS SECTION FOR REMOVE BUTTON:
     if (cardCache.removeBtn) {
       if (isExtraWorkout) {
-        cardCache.removeBtn.setAttribute("data-remove-extra-workout", workout.slug);
+        cardCache.removeBtn.setAttribute("data-trigger-remove-workout", workout.slug);
         cardCache.removeBtn.style.display = "block";
       } else {
         cardCache.removeBtn.style.display = "none";
-        cardCache.removeBtn.removeAttribute("data-remove-extra-workout");
+        cardCache.removeBtn.removeAttribute("data-trigger-remove-workout");
       }
     }
 
@@ -654,6 +654,40 @@ runWhenMemberstackReady(async function (memberstack) {
     }
     
     toggleButtonLoader(removeBtn, false);
+  });
+
+	document.addEventListener("click", function (e) {
+    const triggerRemoveBtn = e.target.closest('[data-trigger-remove-workout]');
+    if (!triggerRemoveBtn) return;
+    
+    e.preventDefault();
+    
+    const workoutSlug = triggerRemoveBtn.getAttribute("data-trigger-remove-workout");
+    if (!workoutSlug) return;
+    
+    console.log(`🎯 Triggered removal for: ${workoutSlug}`);
+    
+    // Find the universal remove button and pass the slug to it
+    const universalRemoveBtn = document.querySelector('[data-remove-extra-workout]');
+    if (!universalRemoveBtn) {
+      console.error('❌ Universal remove button not found');
+      return;
+    }
+    
+    // Transfer the workout slug to the universal button
+    universalRemoveBtn.setAttribute("data-remove-extra-workout", workoutSlug);
+    
+    // Optional: Update the universal button text to show which workout will be removed
+    const workout = currentWorkouts.find(w => w.slug === workoutSlug);
+    if (workout) {
+      const buttonText = universalRemoveBtn.querySelector('[button-text]');
+      if (buttonText) {
+        buttonText.textContent = `Remove ${workout.name}`;
+      }
+      // You could also trigger a modal, highlight the button, etc.
+    }
+    
+    console.log(`✅ Universal button configured for: ${workoutSlug}`);
   });
   
   async function loadWorkoutsByWeek({ week = currentWeek, type, type_category } = {}) {
