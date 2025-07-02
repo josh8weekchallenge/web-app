@@ -614,9 +614,9 @@ runWhenMemberstackReady(async function (memberstack) {
 
   
   
-  // 1. Update your trigger button event listener to use the correct selector:
+  // 1. Trigger button event listener:
   document.addEventListener("click", function (e) {
-    const triggerRemoveBtn = e.target.closest('[data-trigger-remove-workout]');
+    const triggerRemoveBtn = e.target.closest('[data-trigger-remove-workout]'); // ✅ CORRECT
     if (!triggerRemoveBtn) return;
     
     e.preventDefault();
@@ -624,9 +624,6 @@ runWhenMemberstackReady(async function (memberstack) {
     const workoutSlug = triggerRemoveBtn.getAttribute("data-trigger-remove-workout");
     if (!workoutSlug) return;
     
-    console.log(`🎯 Triggered removal for: ${workoutSlug}`);
-    
-    // FIXED: Look for the universal button with the correct attribute
     const universalRemoveBtn = document.querySelector('[data-universal-remove-workout]');
     if (!universalRemoveBtn) {
       console.error('❌ Universal remove button not found');
@@ -634,9 +631,8 @@ runWhenMemberstackReady(async function (memberstack) {
     }
     
     // Transfer the workout slug to the universal button
-    universalRemoveBtn.setAttribute("data-universal-remove-workout", workoutSlug);
+    universalRemoveBtn.setAttribute("data-remove-extra-workout", workoutSlug); // ✅ CORRECT
     
-    // Optional: Update the universal button text to show which workout will be removed
     const workout = currentWorkouts.find(w => w.slug === workoutSlug);
     if (workout) {
       const buttonText = universalRemoveBtn.querySelector('[button-text]');
@@ -644,19 +640,16 @@ runWhenMemberstackReady(async function (memberstack) {
         buttonText.textContent = `Remove ${workout.name}`;
       }
     }
-    
-    console.log(`✅ Universal button configured for: ${workoutSlug}`);
   });
   
-  // 2. Update your universal remove button event listener:
+  // 2. Universal remove button event listener:
   document.addEventListener("click", async function (e) {
-    // FIXED: Only listen for the universal button, not card buttons
     const removeBtn = e.target.closest('[data-universal-remove-workout]');
     if (!removeBtn) return;
     
     e.preventDefault();
     
-    const workoutSlug = removeBtn.getAttribute("data-universal-remove-workout");
+    const workoutSlug = removeBtn.getAttribute("data-remove-extra-workout"); // ✅ CORRECT
     if (!workoutSlug) {
       console.error('❌ No workout selected for removal');
       return;
@@ -668,10 +661,10 @@ runWhenMemberstackReady(async function (memberstack) {
       await removeExtraWorkout(workoutSlug);
       
       // Reset the universal button after successful removal
-      removeBtn.removeAttribute("data-universal-remove-workout");
+      removeBtn.removeAttribute("data-remove-extra-workout"); // ✅ CORRECT
       const buttonText = removeBtn.querySelector('[button-text]');
       if (buttonText) {
-        buttonText.textContent = "Remove Workout"; // Default text
+        buttonText.textContent = "Remove Workout";
       }
       
     } catch (error) {
