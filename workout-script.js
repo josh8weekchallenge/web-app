@@ -903,6 +903,7 @@ runWhenMemberstackReady(async function (memberstack) {
     
     updateExtraWorkoutButtons();
     initializeCarousel(currentWorkouts.length, currentWorkouts.length - 1);
+    triggerToast("add-workout-success");
   }
   
   const handleSave = async ({ exerciseForm, setGroups, exerciseItem, saveBtn, memberstack }) => {
