@@ -540,6 +540,7 @@ runWhenMemberstackReady(async function (memberstack) {
     }
   }
   
+  // Replace your removeExtraWorkout function with this fixed version:
   async function removeExtraWorkout(workoutSlug) {
     console.log(`🗑️ Starting removal for: ${workoutSlug}`);
     
@@ -574,20 +575,60 @@ runWhenMemberstackReady(async function (memberstack) {
     console.log(`💪 Trying to remove: "${muscleGroup}" from "${currentWeek}"`);
     
     await removeExtraWorkoutFromPersistence(currentWeek, muscleGroup);
-    currentWorkouts.splice(workoutIndex, 1);
     
-    const cardCache = DOM.getCard(workoutIndex + 1);
-    if (cardCache) {
-      cardCache.element.style.display = "none";
-      console.log(`👻 Hidden card at index ${workoutIndex + 1}`);
-    }
+    // Remove from currentWorkouts array
+    currentWorkouts.splice(workoutIndex, 1);
+    console.log(`🔄 Removed from currentWorkouts. New length: ${currentWorkouts.length}`);
+    
+    // FIXED: Hide all workout cards first, then re-setup all remaining workouts
+    console.log(`🔄 Re-indexing all workout cards...`);
+    
+    // Hide all cards
+    DOM.workoutCards.forEach(cardCache => {
+      cardCache.element.style.display = 'none';
+    });
+    
+    // Re-setup all remaining workouts with correct indices
+    currentWorkouts.forEach((workout, i) => {
+      const newCardIdx = i + 1;
+      console.log(`📝 Re-setting up workout "${workout.name}" at card index ${newCardIdx}`);
+      
+      // Determine if this is an extra workout
+      const isExtra = workout.slug && workout.slug.includes('extra-workout');
+      
+      const cardCache = setupWorkoutCard(workout, newCardIdx, isExtra);
+      if (!cardCache) return;
+      
+      // Re-setup exercises for this workout
+      const sortedExercises = [...(workout.exercises || [])].sort((a, b) => a.exercise_order - b.exercise_order);
+      
+      if (cardCache.exerciseList) {
+        cardCache.exerciseList.setAttribute("data-workout-slug", workout.slug);
+        
+        sortedExercises.forEach((exercise, x) => {
+          setupExercise(exercise, x + 1, cardCache, { ...workout, exercises: sortedExercises });
+        });
+        
+        // Hide unused exercise slots
+        for (let x = sortedExercises.length + 1; x <= 10; x++) {
+          const exerciseCache = cardCache.exercises.get(x);
+          if (exerciseCache?.element) {
+            exerciseCache.element.style.display = "none";
+          }
+        }
+      }
+    });
     
     updateExtraWorkoutButtons();
     setTimeout(() => initializeCarousel(currentWorkouts.length), 100);
     triggerToast("remove-success");
     
-    console.log(`✅ Removal complete`);
+    console.log(`✅ Removal and re-indexing complete. Total workouts: ${currentWorkouts.length}`);
   }
+
+
+
+  
   
   // 3. Add event listener for remove buttons (add this in your main function)
   document.addEventListener("click", async function (e) {
