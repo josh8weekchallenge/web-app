@@ -503,12 +503,23 @@ runWhenMemberstackReady(async function (memberstack) {
 
   // 1. Add this function to remove extra workout from persistence
   async function removeExtraWorkoutFromPersistence(week, muscleGroup) {
+    console.log(`💾 Removing "${muscleGroup}" from "${week}"`);
+    
     try {
       const currentData = memberJSON?.data?.extraWorkouts || {};
       const weekData = currentData[week] || [];
       
+      console.log(`📋 Before removal:`, weekData);
+      
       // Remove the muscle group from the week's array
-      const updatedWeekData = weekData.filter(group => group !== muscleGroup);
+      const updatedWeekData = weekData.filter(group => {
+        const keep = group !== muscleGroup;
+        console.log(`🔍 "${group}" !== "${muscleGroup}" = ${keep}`);
+        return keep;
+      });
+      
+      console.log(`📋 After removal:`, updatedWeekData);
+      console.log(`📊 Removed ${weekData.length - updatedWeekData.length} items`);
       
       const payload = {
         extraWorkouts: {
@@ -517,11 +528,14 @@ runWhenMemberstackReady(async function (memberstack) {
         }
       };
   
+      console.log(`📤 Sending payload:`, payload);
+      
       await fetchAndMergeMemberData(payload);
       const updatedJSON = await memberstack.getMemberJSON();
       memberJSON.data = updatedJSON.data;
       savedExtraWorkouts = updatedJSON.data.extraWorkouts || {};
       
+      console.log(`✅ Database updated. New data:`, savedExtraWorkouts);
       console.log(`✅ Removed extra workout: ${muscleGroup} from ${week}`);
     } catch (error) {
       console.error("❌ Failed to remove extra workout:", error);
@@ -530,10 +544,16 @@ runWhenMemberstackReady(async function (memberstack) {
   
   // Replace your removeExtraWorkout function with this:
   async function removeExtraWorkout(workoutSlug) {
+    console.log(`🗑️ Starting removal for: ${workoutSlug}`);
+    
     const workoutIndex = currentWorkouts.findIndex(w => w.slug === workoutSlug);
-    if (workoutIndex === -1) return;
+    if (workoutIndex === -1) {
+      console.error(`❌ Workout not found: ${workoutSlug}`);
+      return;
+    }
   
     const workout = currentWorkouts[workoutIndex];
+    console.log(`✅ Found workout: ${workout.name}`);
     
     // Find the matching button to get the exact muscle group name that was saved
     let muscleGroup = null;
@@ -541,6 +561,7 @@ runWhenMemberstackReady(async function (memberstack) {
       const btnGroup = btn.getAttribute("data-load-extra-workout");
       if (workoutSlug.toLowerCase().includes(btnGroup.toLowerCase())) {
         muscleGroup = btnGroup;
+        console.log(`🎯 Matched button group: ${btnGroup}`);
       }
     });
     
@@ -548,17 +569,27 @@ runWhenMemberstackReady(async function (memberstack) {
     if (!muscleGroup) {
       muscleGroup = workoutSlug.replace('extra-workout-', '').split('-')[0];
       muscleGroup = muscleGroup.charAt(0).toUpperCase() + muscleGroup.slice(1).toLowerCase();
+      console.log(`🔄 Fallback extraction: ${muscleGroup}`);
     }
+    
+    console.log(`📊 Current saved data:`, savedExtraWorkouts);
+    console.log(`📅 Current week data:`, savedExtraWorkouts[currentWeek]);
+    console.log(`💪 Trying to remove: "${muscleGroup}" from "${currentWeek}"`);
     
     await removeExtraWorkoutFromPersistence(currentWeek, muscleGroup);
     currentWorkouts.splice(workoutIndex, 1);
     
     const cardCache = DOM.getCard(workoutIndex + 1);
-    if (cardCache) cardCache.element.style.display = "none";
+    if (cardCache) {
+      cardCache.element.style.display = "none";
+      console.log(`👻 Hidden card at index ${workoutIndex + 1}`);
+    }
     
     updateExtraWorkoutButtons();
     setTimeout(() => initializeCarousel(currentWorkouts.length), 100);
     triggerToast("remove-success");
+    
+    console.log(`✅ Removal complete`);
   }
   
   // 3. Add event listener for remove buttons (add this in your main function)
