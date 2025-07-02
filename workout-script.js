@@ -678,12 +678,6 @@ runWhenMemberstackReady(async function (memberstack) {
       return;
     }
     
-    // Optional: Add confirmation dialog
-    const workout = currentWorkouts.find(w => w.slug === workoutSlug);
-    const workoutName = workout ? workout.name : 'this workout';
-    const confirmRemove = confirm(`Are you sure you want to remove ${workoutName}?`);
-    if (!confirmRemove) return;
-    
     toggleButtonLoader(removeBtn, true);
     
     try {
