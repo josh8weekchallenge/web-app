@@ -511,7 +511,6 @@ runWhenMemberstackReady(async function (memberstack) {
       
       console.log(`📋 Before removal:`, weekData);
       
-      // Remove the muscle group from the week's array
       const updatedWeekData = weekData.filter(group => {
         const keep = group !== muscleGroup;
         console.log(`🔍 "${group}" !== "${muscleGroup}" = ${keep}`);
@@ -536,13 +535,11 @@ runWhenMemberstackReady(async function (memberstack) {
       savedExtraWorkouts = updatedJSON.data.extraWorkouts || {};
       
       console.log(`✅ Database updated. New data:`, savedExtraWorkouts);
-      console.log(`✅ Removed extra workout: ${muscleGroup} from ${week}`);
     } catch (error) {
       console.error("❌ Failed to remove extra workout:", error);
     }
   }
   
-  // Replace your removeExtraWorkout function with this:
   async function removeExtraWorkout(workoutSlug) {
     console.log(`🗑️ Starting removal for: ${workoutSlug}`);
     
