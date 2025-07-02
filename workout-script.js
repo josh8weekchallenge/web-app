@@ -621,7 +621,7 @@ runWhenMemberstackReady(async function (memberstack) {
     
     updateExtraWorkoutButtons();
     setTimeout(() => initializeCarousel(currentWorkouts.length), 100);
-    triggerToast("remove-success");
+    triggerToast("remove-workout-success");
     
     console.log(`✅ Removal and re-indexing complete. Total workouts: ${currentWorkouts.length}`);
   }
@@ -650,7 +650,7 @@ runWhenMemberstackReady(async function (memberstack) {
       await removeExtraWorkout(workoutSlug);
     } catch (error) {
       console.error("❌ Failed to remove extra workout:", error);
-      triggerToast("remove-error");
+      triggerToast("remove-workout-error");
     }
     
     toggleButtonLoader(removeBtn, false);
