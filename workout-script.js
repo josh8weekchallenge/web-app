@@ -517,9 +517,6 @@ runWhenMemberstackReady(async function (memberstack) {
         return keep;
       });
       
-      console.log(`📋 After removal:`, updatedWeekData);
-      console.log(`📊 Removed ${weekData.length - updatedWeekData.length} items`);
-      
       const payload = {
         extraWorkouts: {
           ...currentData,
@@ -527,7 +524,6 @@ runWhenMemberstackReady(async function (memberstack) {
         }
       };
   
-      console.log(`📤 Sending payload:`, payload);
       
       await fetchAndMergeMemberData(payload);
       const updatedJSON = await memberstack.getMemberJSON();
@@ -542,7 +538,6 @@ runWhenMemberstackReady(async function (memberstack) {
   
   // Replace your removeExtraWorkout function with this fixed version:
   async function removeExtraWorkout(workoutSlug) {
-    console.log(`🗑️ Starting removal for: ${workoutSlug}`);
     
     const workoutIndex = currentWorkouts.findIndex(w => w.slug === workoutSlug);
     if (workoutIndex === -1) {
@@ -551,7 +546,6 @@ runWhenMemberstackReady(async function (memberstack) {
     }
   
     const workout = currentWorkouts[workoutIndex];
-    console.log(`✅ Found workout: ${workout.name}`);
     
     // Find the matching button to get the exact muscle group name that was saved
     let muscleGroup = null;
@@ -559,7 +553,6 @@ runWhenMemberstackReady(async function (memberstack) {
       const btnGroup = btn.getAttribute("data-load-extra-workout");
       if (workoutSlug.toLowerCase().includes(btnGroup.toLowerCase())) {
         muscleGroup = btnGroup;
-        console.log(`🎯 Matched button group: ${btnGroup}`);
       }
     });
     
@@ -567,22 +560,13 @@ runWhenMemberstackReady(async function (memberstack) {
     if (!muscleGroup) {
       muscleGroup = workoutSlug.replace('extra-workout-', '').split('-')[0];
       muscleGroup = muscleGroup.charAt(0).toUpperCase() + muscleGroup.slice(1).toLowerCase();
-      console.log(`🔄 Fallback extraction: ${muscleGroup}`);
     }
-    
-    console.log(`📊 Current saved data:`, savedExtraWorkouts);
-    console.log(`📅 Current week data:`, savedExtraWorkouts[currentWeek]);
-    console.log(`💪 Trying to remove: "${muscleGroup}" from "${currentWeek}"`);
     
     await removeExtraWorkoutFromPersistence(currentWeek, muscleGroup);
     
     // Remove from currentWorkouts array
     currentWorkouts.splice(workoutIndex, 1);
-    console.log(`🔄 Removed from currentWorkouts. New length: ${currentWorkouts.length}`);
-    
-    // FIXED: Hide all workout cards first, then re-setup all remaining workouts
-    console.log(`🔄 Re-indexing all workout cards...`);
-    
+        
     // Hide all cards
     DOM.workoutCards.forEach(cardCache => {
       cardCache.element.style.display = 'none';
